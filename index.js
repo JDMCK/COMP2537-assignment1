@@ -184,6 +184,7 @@ app.get('/signup', (req, res) => {
 app.post('/signupSubmit', async (req, res) => {
 
   const email = req.body.email;
+  const name = req.body.name;
   const password = req.body.password;
 
   const schema = Joi.object(
@@ -211,7 +212,7 @@ app.post('/signupSubmit', async (req, res) => {
 
   } else if (emails.length == 0) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    await usersCollection.insertOne({ email: email, password: hashedPassword });
+    await usersCollection.insertOne({ email: email, name: name, password: hashedPassword });
     createSession(req);
     res.redirect('/members');
   } else {
