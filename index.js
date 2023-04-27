@@ -149,7 +149,7 @@ app.get('/invalidLogin', (req, res) => {
   let html = `
   <link rel="stylesheet" href="css">
   <div class="content">
-    <h1>Incorrect or invalid email or password</h1>
+    <h1>Invalid password</h1>
     <a href="/login">Try again</a>
   </div>`;
   res.send(html);
