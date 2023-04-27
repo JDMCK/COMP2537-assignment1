@@ -135,7 +135,8 @@ app.post('/loggingin', async (req, res) => {
   }
 
   // Checks if password is correct
-  if (await bcrypt.compare(password, result[0].password)) {
+  const passwordOk = await bcrypt.compare(password, result[0].password)
+  if (passwordOk) {
     createSession(req);
     res.redirect('/members');
   }
