@@ -126,7 +126,7 @@ app.post('/loggingin', async (req, res) => {
     return;
   }
 
-  const result = await usersCollection.find({ email: email }).project({ email: 1, password: 1 }).toArray();
+  const result = await usersCollection.find({ email: email }).project({ email: 1, name: 1, password: 1 }).toArray();
 
   // No users with that input email found
   if (result.length != 1) {
@@ -137,6 +137,7 @@ app.post('/loggingin', async (req, res) => {
   // Checks if password is correct
   const passwordOk = await bcrypt.compare(password, result[0].password)
   if (passwordOk) {
+    req.body.name = result[0].name;
     createSession(req);
     res.redirect('/members');
   }
