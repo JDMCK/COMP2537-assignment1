@@ -45,7 +45,7 @@ app.use(express.urlencoded({ extended: false }));
 // Generates the cookie
 const createSession = (req) => {
   req.session.authenticated = true;
-  req.session.username = req.body.username;
+  req.session.name = req.body.name;
   req.session.email = req.body.email;
   req.session.cookie.maxAge = expireTime;
 };
@@ -79,7 +79,7 @@ app.get('/', async (req, res) => {
     html = `
     <link rel="stylesheet" href="css">
     <div class="content">
-      <h1>Welcome, ${req.session.username}</h1>
+      <h1>Welcome, ${req.session.name}</h1>
       <a href="/members">VIP Zone</a>
       <br>
       <br>
@@ -97,8 +97,8 @@ app.get('/login', (req, res) => {
   <div class="content">
     <h1>Sign In</h1>
     <form action="/loggingin" method="post">
-      <input type="text" name="username" placeholder="username" required>
-      <input type="password" name="password" placeholder="password" required>
+      <input type="text" name="email" placeholder="email">
+      <input type="password" name="password" placeholder="password">
       <button>Submit</button>
     </form>
   </div>
@@ -110,12 +110,12 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/loggingin', async (req, res) => {
-  const username = req.body.username;
+  const email = req.body.email;
   const password = req.body.password;
 
   const schema = Joi.object(
     {
-      username: Joi.string().alphanum().max(20).required(),
+      email: Joi.string().email(),
       password: Joi.string().max(20).required()
     }
   );
@@ -126,9 +126,9 @@ app.post('/loggingin', async (req, res) => {
     return;
   }
 
-  const result = await usersCollection.find({ username: username }).project({ username: 1, password: 1 }).toArray();
+  const result = await usersCollection.find({ email: email }).project({ email: 1, password: 1 }).toArray();
 
-  // No users with that input username found
+  // No users with that input email found
   if (result.length != 1) {
     res.redirect('/invalidLogin');
     return;
@@ -149,7 +149,7 @@ app.get('/invalidLogin', (req, res) => {
   let html = `
   <link rel="stylesheet" href="css">
   <div class="content">
-    <h1>Incorrect or invalid username or password</h1>
+    <h1>Incorrect or invalid email or password</h1>
     <a href="/login">Try again</a>
   </div>`;
   res.send(html);
@@ -168,7 +168,7 @@ app.get('/signup', (req, res) => {
   <div class="content">
     <h1>Signup</h1>
     <form action="/signupSubmit" method="post">
-      <input type="text" name="username" placeholder="username">
+      <input type="text" name="name" placeholder="name">
       <input type="password" name="password" placeholder="password">
       <input type="text" name="email" placeholder="johnsmith@example">
       <button>Submit</button>
@@ -183,12 +183,12 @@ app.get('/signup', (req, res) => {
 
 app.post('/signupSubmit', async (req, res) => {
 
-  const username = req.body.username;
+  const email = req.body.email;
   const password = req.body.password;
 
   const schema = Joi.object(
     {
-      username: Joi.string().alphanum().max(20).required(),
+      name: Joi.string().alphanum().max(20).required(),
       password: Joi.string().max(20).required(),
       email: Joi.string().email().required()
     }
@@ -197,7 +197,7 @@ app.post('/signupSubmit', async (req, res) => {
   const validationResult = schema.validate(req.body);
 
   let html;
-  let usernames = await usersCollection.find({ username: username }).project({ username: 1 }).toArray();
+  let emails = await usersCollection.find({ email: email }).project({ email: 1 }).toArray();
 
   if (validationResult.error != null) {
 
@@ -209,16 +209,16 @@ app.post('/signupSubmit', async (req, res) => {
     </div>`;
     res.send(html);
 
-  } else if (usernames.length == 0) {
+  } else if (emails.length == 0) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    await usersCollection.insertOne({ username: username, password: hashedPassword });
+    await usersCollection.insertOne({ email: email, password: hashedPassword });
     createSession(req);
     res.redirect('/members');
   } else {
     html = `
       <link rel="stylesheet" href="css">
       <div class="content">
-        <h1>Sorry, that username is taken</h1>
+        <h1>Sorry, that email is being used</h1>
         <a href="/signup">Try again</a>
       </div>`;
     res.send(html);
@@ -248,7 +248,7 @@ app.get('/members', (req, res) => {
     <link rel="stylesheet" href="css">
     <div class="content">
       <img src="img/${image.image}" alt="sassy giraffe">
-      <h1>Hello ${req.session.username}, this is a ${image.caption}</h1>
+      <h1>Hello ${req.session.name}, this is a ${image.caption}</h1>
       <a href="/logout">Signout</a>
       <br>
       <br>
